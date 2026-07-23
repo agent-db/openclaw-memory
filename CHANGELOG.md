@@ -17,6 +17,11 @@ versions follow [Semantic Versioning](https://semver.org/).
   replay, pairing-token identity with automatic token rotation.
 - `createMemoryHooks` adapter: `beforePrompt` (recall + context injection) and
   `afterMessage` (fire-and-forget capture).
+- OpenClaw gateway entry (`dist/plugin.js`, declared via
+  `package.json#openclaw.extensions`): registers `message:received` (capture +
+  recall queued as a next-turn context injection, deduped per provider message
+  id) and `message:sent` (assistant-side capture) internal hooks; stays inert
+  with a logged warning when unconfigured.
 - Bundled ClawHub skills: `agentdb` (pairing + full action API over one
   endpoint) and `agentdb-fleet` (shared-workspace task-queue pattern for
   multi-agent fleets).

@@ -4,6 +4,10 @@
   "description": "Long-term, cross-device agent memory backed by AgentDB — Schema.org entities with semantic recall, offline-safe writes, and workspace sharing for multi-agent fleets.",
   "homepage": "https://github.com/agent-db/openclaw-memory",
   "skills": ["skills"],
+  "activation": {
+    "onStartup": true,
+    "onCapabilities": ["hook"]
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
