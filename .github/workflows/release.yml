@@ -21,7 +21,10 @@ jobs:
           registry-url: https://registry.npmjs.org
       # The monorepo dev link (file:../agentdb) does not exist in this
       # standalone mirror — resolve the client from the registry instead.
+      # The lockfile must go too: npm install keeps the lock's file: entry
+      # (a dangling symlink) over the updated package.json spec.
       - run: npm pkg set 'dependencies[@agent-db/client]=^1.0.0'
+      - run: rm -f package-lock.json
       - run: npm install
       - run: npm test
 
@@ -40,6 +43,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
       - run: npm pkg set 'dependencies[@agent-db/client]=^1.0.0'
+      - run: rm -f package-lock.json
       - run: npm install
       - run: npm test
       - name: Verify tag matches package.json version
