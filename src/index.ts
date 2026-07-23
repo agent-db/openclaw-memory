@@ -39,13 +39,26 @@ export interface MemoryHooks {
   }): Promise<void>;
 }
 
+/** Whitespace/case-insensitive comparison key for echo filtering. */
+function textKey(text: string): string {
+  return text.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function createMemoryHooks(config: AgentDBMemoryConfig): MemoryHooks {
   const memory = new AgentDBMemory(config);
   return {
     memory,
     async beforePrompt(userText: string): Promise<string> {
-      const items = await memory.recall(userText);
-      return memory.renderRecall(items);
+      const limit = memory.config.recallLimit;
+      // Over-fetch, then drop echoes of the query itself: the current
+      // message (and repeats of it from other sessions) is captured too,
+      // and it always outranks the memories the user actually wants.
+      const items = await memory.recall(userText, { limit: limit * 2 + 2 });
+      const queryKey = textKey(userText);
+      const relevant = items
+        .filter((m) => textKey(m.text ?? "") !== queryKey)
+        .slice(0, limit);
+      return memory.renderRecall(relevant);
     },
     async afterMessage(msg): Promise<void> {
       await memory.captureMessage(msg);

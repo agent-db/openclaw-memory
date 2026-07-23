@@ -27,10 +27,14 @@ openclaw plugins install npm:@agent-db/openclaw-memory   # or a packed .tgz
 ```
 
 Then set the plugin config (or the env fallbacks from the table below) and
-restart the gateway. The entry registers two internal hooks:
+restart the gateway. The entry registers three internal hooks:
 
-- `message:received` — captures the user message and queues relevant recalled
-  memories as a next-turn context injection (deduped per provider message id);
+- `message:received` — captures the user message and records it as the session's
+  pending recall query;
+- `agent:bootstrap` — at turn preparation, recalls relevant memories for the
+  pending query and injects them as a synthetic `AGENTDB_MEMORY.md` context file
+  (OpenClaw's plugin API blocks `enqueueNextTurnInjection` after registration,
+  so bootstrap mutation is the supported injection path);
 - `message:sent` — captures the assistant reply.
 
 With no `baseUrl` configured the plugin stays inert and logs a warning; it never

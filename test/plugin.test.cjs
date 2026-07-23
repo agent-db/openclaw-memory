@@ -1,7 +1,9 @@
 /**
  * Unit test for the OpenClaw gateway entry (src/plugin.ts) — no live
  * AgentDB stack needed. A local mock action server plays AgentDB and a
- * fake plugin api records hook registrations and next-turn injections.
+ * fake plugin api records hook registrations. Recall is delivered through
+ * the mutating `agent:bootstrap` hook (bootstrapFiles), mirroring the
+ * gateway's turn-prepare flow.
  */
 
 const { test } = require("node:test");
@@ -63,10 +65,9 @@ function startMockServer() {
   });
 }
 
-/** Fake OpenClawPluginApi capturing hook + injection traffic. */
+/** Fake OpenClawPluginApi capturing hook registrations. */
 function fakeApi(pluginConfig) {
   const hooks = new Map();
-  const injections = [];
   const warnings = [];
   return {
     api: {
@@ -79,37 +80,32 @@ function fakeApi(pluginConfig) {
         error: () => {},
         debug: () => {},
       },
-      registerHook(events, handler) {
+      registerHook(events, handler, opts) {
+        // The gateway registry rejects hooks without a unique opts.name.
+        if (!opts || typeof opts.name !== "string" || !opts.name.trim()) {
+          throw new Error("hook registration missing name");
+        }
         for (const e of [].concat(events)) hooks.set(e, handler);
-      },
-      session: {
-        workflow: {
-          async enqueueNextTurnInjection(injection) {
-            injections.push(injection);
-            return {
-              enqueued: true,
-              id: "inj-1",
-              sessionKey: injection.sessionKey,
-            };
-          },
-        },
       },
     },
     hooks,
-    injections,
     warnings,
   };
 }
 
-function receivedEvent(context) {
+function hookEvent(type, action, context) {
   return {
-    type: "message",
-    action: "received",
+    type,
+    action,
     sessionKey: "session-1",
     context,
     timestamp: new Date(),
     messages: [],
   };
+}
+
+function receivedEvent(context) {
+  return hookEvent("message", "received", context);
 }
 
 test("gateway entry", async (t) => {
@@ -145,13 +141,14 @@ test("gateway entry", async (t) => {
         path.join(os.tmpdir(), "agentdb-plugin-")
       );
       try {
-        const { api, hooks, injections } = fakeApi({
+        const { api, hooks } = fakeApi({
           baseUrl,
           accessToken: fakeJwt(),
           stateDir,
         });
         registerAgentDBMemory(api);
         assert.ok(hooks.has("message:received"), "message:received registered");
+        assert.ok(hooks.has("agent:bootstrap"), "agent:bootstrap registered");
         assert.ok(hooks.has("message:sent"), "message:sent registered");
 
         await hooks.get("message:received")(
@@ -165,11 +162,33 @@ test("gateway entry", async (t) => {
         // Fire-and-forget capture settles on the same mock server.
         await new Promise((r) => setTimeout(r, 100));
 
-        assert.strictEqual(injections.length, 1, "one next-turn injection");
-        assert.strictEqual(injections[0].sessionKey, "session-1");
-        assert.strictEqual(injections[0].idempotencyKey, "msg-42");
-        assert.match(injections[0].text, /Relevant memories from AgentDB/);
-        assert.match(injections[0].text, /deploy freeze ends Friday/);
+        // Turn prepare: the bootstrap hook injects recalled memories as a
+        // synthetic context file.
+        const bootstrapCtx = { bootstrapFiles: [] };
+        await hooks.get("agent:bootstrap")(
+          hookEvent("agent", "bootstrap", bootstrapCtx)
+        );
+        assert.strictEqual(
+          bootstrapCtx.bootstrapFiles.length,
+          1,
+          "one recall context file"
+        );
+        const recallFile = bootstrapCtx.bootstrapFiles[0];
+        assert.strictEqual(recallFile.path, "AGENTDB_MEMORY.md");
+        assert.match(recallFile.content, /Relevant memories from AgentDB/);
+        assert.match(recallFile.content, /deploy freeze ends Friday/);
+
+        // The pending query is consumed: a heartbeat turn with no fresh
+        // inbound message injects nothing.
+        const heartbeatCtx = { bootstrapFiles: [] };
+        await hooks.get("agent:bootstrap")(
+          hookEvent("agent", "bootstrap", heartbeatCtx)
+        );
+        assert.strictEqual(
+          heartbeatCtx.bootstrapFiles.length,
+          0,
+          "no stale recall on heartbeat turn"
+        );
 
         const captures = received.filter((b) => b["@type"] === "CreateAction");
         assert.strictEqual(captures.length, 1, "user message captured");

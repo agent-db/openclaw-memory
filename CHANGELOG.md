@@ -6,6 +6,23 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Recall is now injected through the mutating `agent:bootstrap` internal hook as
+  a synthetic `AGENTDB_MEMORY.md` bootstrap context file, replacing
+  `enqueueNextTurnInjection`. OpenClaw's plugin API lifecycle guard (2026.7.x,
+  including 2026.7.2-beta.3) only keeps `emitAgentEvent`,
+  `sendSessionAttachment`, `scheduleSessionTurn`, and
+  `unscheduleSessionTurnsByTag` callable after registration, so the injection
+  call silently returned `undefined` from message hooks. Verified live: the
+  model quotes the injected block verbatim from its context.
+- `message:received` now records the message as the session's pending recall
+  query (LRU-capped at 256 sessions); the query is consumed at the next
+  bootstrap so heartbeat/scheduled turns don't re-inject stale recall.
+- `beforePrompt` over-fetches recall and filters out echoes of the query itself
+  — the just-captured message always outranked the memories the user actually
+  wanted.
+
 ## [0.1.0] - 2026-07-23
 
 ### Added

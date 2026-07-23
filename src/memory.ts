@@ -97,17 +97,37 @@ export class AgentDBMemory {
    * (embeddings index asynchronously, and very short queries match better
    * literally). Network failure returns [] — recall never throws into the
    * chat loop.
+   *
+   * Searches each entity type separately because the server's type filter
+   * is exact (a `CreativeWork` search does NOT match `Message` rows even
+   * though Message subclasses CreativeWork on schema.org). Default covers
+   * both explicit memories and captured conversation.
    */
   async recall(
     query: string,
-    opts: { limit?: number; type?: string } = {}
+    opts: { limit?: number; type?: string; types?: string[] } = {}
   ): Promise<MemoryEntity[]> {
     const limit = opts.limit ?? this.config.recallLimit;
-    const type = opts.type ?? "CreativeWork";
+    const types =
+      opts.types ?? (opts.type ? [opts.type] : ["CreativeWork", "Message"]);
     try {
-      const semantic = await this.search(type, query, "similarTo", limit);
-      if (semantic.length > 0) return semantic;
-      return await this.search(type, query, "like", limit);
+      for (const method of ["similarTo", "like"] as const) {
+        const merged: MemoryEntity[] = [];
+        const seen = new Set<string>();
+        for (const type of types) {
+          if (merged.length >= limit) break;
+          const found = await this.search(type, query, method, limit);
+          for (const item of found) {
+            const key = item.identifier ?? item.id ?? item.text ?? "";
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            merged.push(item);
+            if (merged.length >= limit) break;
+          }
+        }
+        if (merged.length > 0) return merged;
+      }
+      return [];
     } catch {
       return [];
     }
