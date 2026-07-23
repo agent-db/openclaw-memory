@@ -1,4 +1,4 @@
-# @agentdb/openclaw-memory
+# @agent-db/openclaw-memory
 
 OpenClaw gateway plugin: long-term, cross-device agent memory backed by
 [AgentDB](../agentdb/) — Schema.org JSON-LD entities with semantic recall,
@@ -22,7 +22,7 @@ Implements Phases 1–4 of
 ## Quick start (library use)
 
 ```ts
-import { createMemoryHooks } from "@agentdb/openclaw-memory";
+import { createMemoryHooks } from "@agent-db/openclaw-memory";
 
 const hooks = createMemoryHooks({
   baseUrl: process.env.AGENTDB_BASE_URL,
@@ -72,4 +72,4 @@ semantic recall → capture → offline queue → flush.
 ## License
 
 MIT — see [LICENSE](./LICENSE). Depends only on the (also MIT,
-zero-runtime-dependency) [`agentdb`](../agentdb/) client.
+zero-runtime-dependency) [`@agent-db/client`](../agentdb/) client.

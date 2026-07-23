@@ -1,5 +1,8 @@
 {
-  "name": "@agentdb/openclaw-memory",
+  "name": "@agent-db/openclaw-memory",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.1.0",
   "description": "OpenClaw gateway plugin: long-term, cross-device agent memory backed by AgentDB (Schema.org JSON-LD entities with semantic recall).",
   "type": "module",
@@ -22,8 +25,8 @@
     "lint": "prettier --check \"src/**/*.ts\" \"skills/**/*.md\" \"test/*.cjs\"",
     "pretest": "npm run clean && npm run build",
     "test": "node --test test/*.test.cjs",
-    "prepack": "npm pkg set 'dependencies.agentdb=^1.0.0'",
-    "postpack": "npm pkg set 'dependencies.agentdb=file:../agentdb'"
+    "prepack": "npm pkg set 'dependencies[@agent-db/client]=^1.0.0'",
+    "postpack": "npm pkg set 'dependencies[@agent-db/client]=file:../agentdb'"
   },
   "keywords": [
     "openclaw",
@@ -37,7 +40,7 @@
   "author": "TurboSchema",
   "license": "MIT",
   "dependencies": {
-    "agentdb": "file:../agentdb"
+    "@agent-db/client": "file:../agentdb"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

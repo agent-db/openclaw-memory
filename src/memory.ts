@@ -13,7 +13,7 @@
  * degrades to an empty result rather than blocking the chat loop.
  */
 
-import { extractItems } from "agentdb";
+import { extractItems } from "@agent-db/client";
 
 import { Identity } from "./auth.js";
 import {

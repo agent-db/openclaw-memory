@@ -4,7 +4,7 @@
  * so a gateway restart never re-pairs — pairing tokens are single-use.
  */
 
-import { pairAgent, rotateAgentToken } from "agentdb/side-apis";
+import { pairAgent, rotateAgentToken } from "@agent-db/client/side-apis";
 import fs from "node:fs";
 import path from "node:path";
 
