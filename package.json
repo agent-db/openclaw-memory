@@ -3,6 +3,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agent-db/openclaw-memory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agent-db/openclaw-memory/issues"
+  },
   "version": "0.1.0",
   "description": "OpenClaw gateway plugin: long-term, cross-device agent memory backed by AgentDB (Schema.org JSON-LD entities with semantic recall).",
   "type": "module",

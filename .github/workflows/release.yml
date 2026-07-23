@@ -1,0 +1,55 @@
+name: CI & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      # The monorepo dev link (file:../agentdb) does not exist in this
+      # standalone mirror — resolve the client from the registry instead.
+      - run: npm pkg set 'dependencies[@agent-db/client]=^1.0.0'
+      - run: npm install
+      - run: npm test
+
+  publish:
+    # npm publish only on version tags, after tests pass
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC for --provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm pkg set 'dependencies[@agent-db/client]=^1.0.0'
+      - run: npm install
+      - run: npm test
+      - name: Verify tag matches package.json version
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "Tag $TAG_VERSION does not match package.json $PKG_VERSION" >&2
+            exit 1
+          fi
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
