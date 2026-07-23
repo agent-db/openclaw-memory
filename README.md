@@ -15,9 +15,27 @@ Implements Phases 1–4 of
 | Identity lifecycle | `src/auth.ts`                   | pairing-token bootstrap, persisted credentials (0600), 401 → rotate → retry     |
 | Offline queue      | `src/queue.ts`                  | JSONL write queue; replays on flush, drops server-rejected (4xx) bodies         |
 | Hooks adapter      | `src/index.ts`                  | `createMemoryHooks` → `beforePrompt` (inject recall) / `afterMessage` (capture) |
+| Gateway entry      | `src/plugin.ts`                 | `definePluginEntry` wiring the engine into OpenClaw's internal hooks            |
 | ClawHub skill      | `skills/agentdb/SKILL.md`       | teaches any OpenClaw agent the pairing flow + full action API over `curl`       |
 | Fleet skill        | `skills/agentdb-fleet/SKILL.md` | shared-workspace task-queue pattern for multi-agent fleets                      |
-| Plugin manifest    | `openclaw.plugin.json`          | registers the `skills/` directory with the OpenClaw gateway                     |
+| Plugin manifest    | `openclaw.plugin.json`          | registers the `skills/` directory + startup activation with the gateway         |
+
+## Quick start (OpenClaw plugin)
+
+```bash
+openclaw plugins install npm:@agent-db/openclaw-memory   # or a packed .tgz
+```
+
+Then set the plugin config (or the env fallbacks from the table below) and
+restart the gateway. The entry registers two internal hooks:
+
+- `message:received` — captures the user message and queues relevant recalled
+  memories as a next-turn context injection (deduped per provider message id);
+- `message:sent` — captures the assistant reply.
+
+With no `baseUrl` configured the plugin stays inert and logs a warning; it never
+blocks gateway startup or the chat loop (capture is fire-and-forget, recall
+failures degrade to no injection).
 
 ## Quick start (library use)
 
