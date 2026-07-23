@@ -1,0 +1,49 @@
+{
+  "id": "agentdb-memory",
+  "name": "AgentDB Memory",
+  "description": "Long-term, cross-device agent memory backed by AgentDB — Schema.org entities with semantic recall, offline-safe writes, and workspace sharing for multi-agent fleets.",
+  "homepage": "https://github.com/agent-db/openclaw-memory",
+  "skills": ["skills"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "AgentDB REST base URL (no trailing slash). Falls back to AGENTDB_BASE_URL."
+      },
+      "pairingToken": {
+        "type": "string",
+        "description": "Single-use pairing token for first boot. Falls back to AGENTDB_PAIRING_TOKEN."
+      },
+      "accessToken": {
+        "type": "string",
+        "description": "Pre-minted access token (alternative to pairingToken)."
+      },
+      "refreshToken": {
+        "type": "string",
+        "description": "Refresh token paired with accessToken."
+      },
+      "apikey": {
+        "type": "string",
+        "description": "Workspace api key — required for Shared-domain fleet memory."
+      },
+      "domain": {
+        "type": "string",
+        "enum": ["Private", "Shared", "Internal", "Public"],
+        "default": "Private",
+        "description": "Data domain memories are written to."
+      },
+      "stateDir": {
+        "type": "string",
+        "description": "Directory for persisted credentials and the offline queue. Default ~/.openclaw/agentdb."
+      },
+      "recallLimit": {
+        "type": "integer",
+        "minimum": 1,
+        "default": 5,
+        "description": "Max entities returned by recall."
+      }
+    }
+  }
+}

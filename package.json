@@ -1,0 +1,51 @@
+{
+  "name": "@agentdb/openclaw-memory",
+  "version": "0.1.0",
+  "description": "OpenClaw gateway plugin: long-term, cross-device agent memory backed by AgentDB (Schema.org JSON-LD entities with semantic recall).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "skills",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "lint": "prettier --check \"src/**/*.ts\" \"skills/**/*.md\" \"test/*.cjs\"",
+    "pretest": "npm run clean && npm run build",
+    "test": "node --test test/*.test.cjs",
+    "prepack": "npm pkg set 'dependencies.agentdb=^1.0.0'",
+    "postpack": "npm pkg set 'dependencies.agentdb=file:../agentdb'"
+  },
+  "keywords": [
+    "openclaw",
+    "clawhub",
+    "memory",
+    "agentdb",
+    "schema.org",
+    "json-ld",
+    "agent"
+  ],
+  "author": "TurboSchema",
+  "license": "MIT",
+  "dependencies": {
+    "agentdb": "file:../agentdb"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "prettier": "^3.9.5",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=22.22.3"
+  },
+  "sideEffects": false
+}
